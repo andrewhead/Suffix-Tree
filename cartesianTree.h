@@ -23,10 +23,15 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-//struct node { intT parent; intT value;};
+struct node {
+  unsigned long firstChar;
+  unsigned long parent;
+  unsigned long value; 
+};
 
-void merge(node* N, uintT left, uintT right) {
-  uintT head;
+
+void merge(node* N, unsigned long left, unsigned long right) {
+  unsigned long head;
   if (N[left].value > N[right].value) {
     head = left; left = N[left].parent;}
   else {head = right; right= N[right].parent;}
@@ -39,7 +44,7 @@ void merge(node* N, uintT left, uintT right) {
     else {N[head].parent = right; right = N[right].parent;}
     head = N[head].parent;}}
 
-void cartesianTree(node* Nodes, uintT s, uintT n) { 
+void cartesianTree(node* Nodes, unsigned long s, unsigned long n) { 
   if (n < 2) return;
   if(n == 2) {
     if (Nodes[s].value > Nodes[s+1].value) Nodes[s].parent=s+1;

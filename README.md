@@ -20,7 +20,7 @@ compile the code
 
 Then run the test code on a list of nodes created from a suffix array:
 
-    ./suffixTree data/nodes.tsv
+    ./cartesianTree data/nodes.tsv -o output.tsv
 
 # Fetching the test data
 

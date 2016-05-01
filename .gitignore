@@ -29,6 +29,11 @@
 *.hex
 suffixTree
 suffixArray
+cartesianTree
 
 # Debug files
 *.dSYM/
+
+# Text editing temporary files
+.*.swp
+.*.swo

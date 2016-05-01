@@ -61,6 +61,7 @@ suffixTree suffixArrayToTree (uintT* SA, uintT* LCP, long n, uintT* s){
   
   // Before constructing the tree, save a list of all the nodes
   FILE *nodesFile = fopen("nodes.tsv", "w");
+  fprintf(nodesFile, "%ld\n", m);  // the first line is the number of nodes
   for (long i = 0; i < m; i++) {
     fprintf(nodesFile, "%ld\t%ld\n", i, nodes[i].value);
   }
@@ -76,6 +77,7 @@ suffixTree suffixArrayToTree (uintT* SA, uintT* LCP, long n, uintT* s){
 
   // Save the results from insertion into the Cartesian tree
   FILE *cartesianTreeFile = fopen("cartesian_tree.tsv", "w");
+  fprintf(cartesianTreeFile, "%ld\n", m);  // the first line is the number of nodes
   for (long i = 0; i < m; i++) {
     fprintf(cartesianTreeFile, "%ld\t%ld\t%ld\t%ld\n", i, nodes[i].value, nodes[i].parent, nodes[nodes[i].parent].value);
   }
