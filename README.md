@@ -18,14 +18,26 @@ compile the code
     . ./init.sh  # initialize the environment with UPC compiler
     make
 
-Then fetch the test data:
+Then run the test code on a list of nodes created from a suffix array:
+
+    ./suffixTree data/nodes.tsv
+
+# Fetching the test data
+
+If you want to test this with larger test data rather than the data included
+in the `data` directory, you can find some long strings at
+http://people.unipmn.it/manzini/lightweight/corpus/:
 
     wget http://people.unipmn.it/manzini/lightweight/corpus/etext99.bz2
     bunzip2 etext99.bz2
  
-Then run the test code:
+# Creating test data
 
-    ./suffixTree etext99.bz2
+To create a list of nodes and the expected resulting Cartesian tree for
+an arbitrary text file, check out code revision
+926cfd8dcd8e99bbad2ed16c2ef845a336d6ae71 and run:
+
+    ./suffixTree <my-test-string-file>
 
 # Original README
 
