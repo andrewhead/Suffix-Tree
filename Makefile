@@ -27,32 +27,32 @@ ifdef LONG
 INTT = -DLONG
 endif
 
-CC = g++
+CC = upcc
 LFLAGS =
-CFLAGS = -O2 $(INTT)
+CFLAGS = $(INTT)
 
 ifdef OPENMP
-PCC = g++
-PCFLAGS = -fopenmp -O2 -DOPENMP $(INTT)
+PCC = upcc
+PCFLAGS = -fopenmp -DOPENMP $(INTT)
 PLFLAGS = -fopenmp
 
 else ifdef GCILK
-PCC = g++
-PCFLAGS = -lcilkrts -fcilkplus -O2 -DCILKP $(INTT)
+PCC = upcc
+PCFLAGS = -lcilkrts -fcilkplus -DCILKP $(INTT)
 PLFLAGS = -lcilkrts -fcilkplus
 
 else ifdef CILK
 PCC = cilk++
-PCFLAGS = -O2 -DCILK -Wno-cilk-for $(INTT)
+PCFLAGS = -DCILK -Wno-cilk-for $(INTT)
 PLFLAGS =
 
 else ifdef IPPROOT
 PCC = icpc
-PCFLAGS = -O2 -DCILKP $(INTT)
+PCFLAGS = -DCILKP $(INTT)
 PLFLAGS =
 CC = icpc
 LFLAGS =
-CFLAGS = -O2
+CFLAGS = 
 
 else 
 PCC = $(CC)
@@ -66,11 +66,8 @@ ALL = cartesianTree
 
 all : $(ALL)
 
-catesianTreeTest.o: cartesianTreeTest.C
-	$(PCC) $(PCFLAGS) -c cartesianTreeTest.C
-
-cartesianTree:  cartesianTreeTest.o
-	$(PCC) $(PLFLAGS) -o $@ cartesianTreeTest.o
+cartesianTree: cartesianTreeTest.upc
+	$(PCC) $(PCFLAGS) -o $@ cartesianTreeTest.upc
 
 clean :
 	rm -f *.o $(ALL)

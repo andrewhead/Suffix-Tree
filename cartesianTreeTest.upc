@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     printf("Read nodes from file\n");
     
     // Start a timer.  This code is reused from the gettime.h file
-    timeval now;
+    struct timeval now;
     struct timezone tzp;
     gettimeofday(&now, &tzp);
     double start_time = ((double) now.tv_sec) + ((double) now.tv_usec)/1000000.;

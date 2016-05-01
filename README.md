@@ -20,7 +20,7 @@ compile the code
 
 Then run the test code on a list of nodes created from a suffix array:
 
-    ./cartesianTree data/nodes.tsv -o output.tsv
+    upcrun -n 1 ./cartesianTree data/nodes.tsv -o output.tsv
 
 To test that your changes have left this code still working properly:
 
@@ -29,7 +29,7 @@ To test that your changes have left this code still working properly:
 You should see no output from this command, suggesting that the output
 from the command is equivalent to the test output we produced.
 
-# Fetching the test data
+## Fetching the test data
 
 If you want to test this with larger test data rather than the data included
 in the `data` directory, you can find some long strings at
@@ -38,7 +38,7 @@ http://people.unipmn.it/manzini/lightweight/corpus/:
     wget http://people.unipmn.it/manzini/lightweight/corpus/etext99.bz2
     bunzip2 etext99.bz2
  
-# Creating test data
+## Creating test data
 
 To create a list of nodes and the expected resulting Cartesian tree for
 an arbitrary text file, check out code revision
@@ -46,7 +46,7 @@ an arbitrary text file, check out code revision
 
     ./suffixTree <my-test-string-file>
 
-# Original README
+## Original README
 
 This directory contains the code for the suffix tree algorithm
 described in the following paper:

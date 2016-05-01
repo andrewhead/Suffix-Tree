@@ -23,11 +23,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-struct node {
+typedef struct node {
   unsigned long firstChar;
   unsigned long parent;
   unsigned long value; 
-};
+} node;
 
 
 void merge(node* N, unsigned long left, unsigned long right) {
