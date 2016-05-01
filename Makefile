@@ -61,37 +61,16 @@ PCFLAGS = $(CFLAGS)
 endif
 
 
-BASIC = cilk.h utils.h
-SEQUENCE = sequence.h $(BASIC) seq.h
-INTSORT = blockRadixSort.h transpose.h
-STRINGGEN = $(ITEMGEN) stringGen.h
+BASIC = cilk.h
 ALL = cartesianTree
 
 all : $(ALL)
 
-suffixArrayTest.o: suffixArrayTest.C $(STRINGGEN) $(SEQUENCE)
-	$(PCC) $(PCFLAGS) -c suffixArrayTest.C
-
-mergeSuffixArrayToTree.o: mergeSuffixArrayToTree.C suffixTree.h cartesianTree.h $(SEQUENCE) $(INTSORT) hash.h 
-	$(PCC) $(PCFLAGS) -c mergeSuffixArrayToTree.C
-
-suffixTreeTest.o: suffixTreeTest.C $(STRINGGEN) $(SEQUENCE) hash.h suffixTree.h 
-	$(PCC) $(PCFLAGS) -c suffixTreeTest.C
-
 catesianTreeTest.o: cartesianTreeTest.C
 	$(PCC) $(PCFLAGS) -c cartesianTreeTest.C
 
-suffixTree:  mergeSuffixArrayToTree.o suffixArray.o suffixTreeTest.o
-	$(PCC) $(PLFLAGS) -o $@ mergeSuffixArrayToTree.o suffixArray.o suffixTreeTest.o 
-
 cartesianTree:  cartesianTreeTest.o
 	$(PCC) $(PLFLAGS) -o $@ cartesianTreeTest.o
-
-suffixArray.o: rangeMin.h suffixArray.C merge.h $(INTSORT) $(SEQUENCE)
-	$(PCC) $(PCFLAGS) -c suffixArray.C
-
-suffixArray : suffixArrayTest.o suffixArray.o
-	$(PCC) $(PLFLAGS) -o $@ suffixArrayTest.o suffixArray.o 
 
 clean :
 	rm -f *.o $(ALL)
