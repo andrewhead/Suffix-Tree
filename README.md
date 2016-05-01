@@ -22,6 +22,13 @@ Then run the test code on a list of nodes created from a suffix array:
 
     ./cartesianTree data/nodes.tsv -o output.tsv
 
+To test that your changes have left this code still working properly:
+
+    diff -q output.tsv data/cartesian_tree.tsv
+
+You should see no output from this command, suggesting that the output
+from the command is equivalent to the test output we produced.
+
 # Fetching the test data
 
 If you want to test this with larger test data rather than the data included
