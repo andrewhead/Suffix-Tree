@@ -51,6 +51,7 @@ suffixTree suffixArrayToTree (uintT* SA, uintT* LCP, long n, uintT* s){
     nodes[2*i].parent = 0;
     nodes[2*i+1].parent = 0;
   }
+
   nodes[0].value = 0;
   nodes[1].value = n-SA[0]+1;
   nodes[0].parent = nodes[1].parent = 0;
@@ -58,6 +59,13 @@ suffixTree suffixArrayToTree (uintT* SA, uintT* LCP, long n, uintT* s){
   free(LCP); free(SA);
   nextTime("Time to initialize nodes");
   
+  // Before constructing the tree, save a list of all the nodes
+  FILE *nodesFile = fopen("nodes.tsv", "w");
+  for (long i = 0; i < m; i++) {
+    fprintf(nodesFile, "%ld\t%ld\n", i, nodes[i].value);
+  }
+  fclose(nodesFile);
+
   cartesianTree(nodes, 1, m-1);
   nextTime("Time for building CT in parallel");
 
@@ -65,6 +73,13 @@ suffixTree suffixArrayToTree (uintT* SA, uintT* LCP, long n, uintT* s){
   cilk_for(long i = 1; i < m; i++) 
     nodes[i].parent = getRoot(nodes, i);
   nextTime("Time for shortcuts");
+
+  // Save the results from insertion into the Cartesian tree
+  FILE *cartesianTreeFile = fopen("cartesian_tree.tsv", "w");
+  for (long i = 0; i < m; i++) {
+    fprintf(cartesianTreeFile, "%ld\t%ld\t%ld\t%ld\n", i, nodes[i].value, nodes[i].parent, nodes[nodes[i].parent].value);
+  }
+  fclose(cartesianTreeFile);
 
   // insert into hash table  
   suffixTree ST = suffixTree(n, m, nodes, s);

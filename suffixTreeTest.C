@@ -107,7 +107,7 @@ int cilk_main(int argc, char **argv) {
       str[n] = 0; str[n+1] = 0; str[n+2] = 0;
       s.del();
     }
-    for(int r=0;r<4;r++){
+    for(int r=0;r<1;r++){
       startTime();
       pair<uintT*,uintT*> SA_LCP = suffixArray(str, n, true);
       uintT* SA = SA_LCP.first;
