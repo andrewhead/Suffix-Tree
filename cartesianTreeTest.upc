@@ -37,6 +37,12 @@ inline unsigned long getRoot(shared node* nodes, unsigned long i) {
   return root;
 }
 
+// UPC Data structures
+// Shared structures for holding nodes of the tree
+shared node* nodes;
+shared unsigned long n;
+shared unsigned long nodes_per_thread;
+
 // Adapted from the `cilk_main` code from suffixTreeTest.C.
 // Most of this is the same code, but it uses only C instead of C++, and performs
 // only construction of the Cartesian tree instead of the full suffix tree from a file.
@@ -47,41 +53,60 @@ int main(int argc, char **argv) {
   }
   else {
 
+    // Filename arguments
     char* input_filename = (char*)argv[1];
     char* output_filename = (char*)argv[2];
-    long n;
-    shared node *nodes;
 
-    FILE *nodes_file = fopen(input_filename, "r");
-  
-    // Read the nodes into a local list
-    fscanf(nodes_file, "%ld\n", &n);
-    printf("Number of nodes in file %s: %ld\n", input_filename, n);
+    // For iterating through the nodes in a data file
+    FILE *nodes_file;
     unsigned long index;
     unsigned long value;
-    unsigned long nodes_per_thread = (n + THREADS - 1) / THREADS;
-    nodes = (shared node*) upc_all_alloc(THREADS, nodes_per_thread * sizeof(node));
-    for (long i = 0; i < n; i++) {
-        fscanf(nodes_file, "%ld\t%ld\n", &index, &value);
-        nodes[index].value = value;
-        nodes[index].parent = 0;  // all nodes start without a parent
+  
+    // Read the nodes into a local list
+    printf("Before the split\n");
+    if (MYTHREAD == 0) {
+      unsigned long num_nodes;
+      nodes_file = fopen(input_filename, "r");
+      fscanf(nodes_file, "%ld\n", &num_nodes);
+      n = num_nodes;  // transfer the node count to the shared variable
+      printf("Number of nodes in file %s: %ld\n", input_filename, n);
+      nodes_per_thread = (n + THREADS - 1) / THREADS;
     }
-    fclose(nodes_file);
-    printf("Read nodes from file\n");
+    upc_barrier;
+
+    nodes = (shared node*) upc_all_alloc(THREADS, nodes_per_thread * sizeof(node));
+    upc_barrier;
+
+    if (MYTHREAD == 0) {
+      for (long i = 0; i < n; i++) {
+          fscanf(nodes_file, "%ld\t%ld\n", &index, &value);
+          nodes[index].value = value;
+          nodes[index].parent = 0;  // all nodes start without a parent
+      }
+      fclose(nodes_file);
+      printf("Read nodes from file\n");
+    }
+    upc_barrier;
     
     // Start a timer.  This code is reused from the gettime.h file
     struct timeval now;
     struct timezone tzp;
-    gettimeofday(&now, &tzp);
-    double start_time = ((double) now.tv_sec) + ((double) now.tv_usec)/1000000.;
+    double start_time;
+    if (MYTHREAD == 0) {
+      gettimeofday(&now, &tzp);
+      start_time = ((double) now.tv_sec) + ((double) now.tv_usec)/1000000.;
+    }
 
     // Construct the Cartesian tree
     parallel_cartesian_tree(nodes, n);
+    upc_barrier;
 
     // Update report the time taken to construct the tree
-    gettimeofday(&now, &tzp);
-    double end_time = ((double) now.tv_sec) + ((double) now.tv_usec)/1000000.;
-    printf("Cartesian tree construction runtime: %lf\n", end_time - start_time);
+    if (MYTHREAD == 0) {
+      gettimeofday(&now, &tzp);
+      double end_time = ((double) now.tv_sec) + ((double) now.tv_usec)/1000000.;
+      printf("Cartesian tree construction runtime: %lf\n", end_time - start_time);
+    }
 
     // This was used in the original mergeSuffixArrayToTree code to, I expect,
     // essentially coalesce repeated nodes.  We repeat it here so that we can compare
