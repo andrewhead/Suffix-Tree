@@ -23,12 +23,77 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
+#include <sys/syscall.h>
+#include <upc.h>
+
+
 typedef struct node {
   unsigned long firstChar;
   unsigned long parent;
   unsigned long value; 
 } node;
 
+
+// This is equivalent to the former "merge" method except that it takes
+// in a pointer to a shared array of nodes, instead of just a list of nodes.
+void parallel_merge(shared node* N, unsigned long left, unsigned long right) {
+  unsigned long head;
+  if (N[left].value > N[right].value) {
+    head = left; left = N[left].parent;}
+  else {head = right; right= N[right].parent;}
+  
+  while(1) {
+    if (left == 0) {N[head].parent = right; break;}
+    if (right == 0) {N[head].parent = left; break;}
+    if (N[left].value > N[right].value) {
+      N[head].parent = left; left = N[left].parent;}
+    else {N[head].parent = right; right = N[right].parent;}
+    head = N[head].parent;}}
+
+
+// This is where my new code for this algorithm is.
+// The point of this is to show that there is an elegant PGAS implementation that
+// can make use of iteration instead of thread-level recursion, that can easily
+// be extended across multiple compute nodes.
+void parallel_cartesian_tree(shared node* Nodes, unsigned long n) {
+
+  int tree_size;
+  int middle;
+
+  for (int step = 2; step < n * 2; step *= 2) {
+  
+    upc_forall(int start = 0; start < n; start += step; &Nodes[start]) {
+
+      // Compute the size of the set of nodes that will be merged
+      if (n - start >= step) {
+        tree_size = step;
+      } else {
+        tree_size = n - start;
+      }
+
+      // We preserve this special case from the original code
+      if (tree_size == 2) {
+        if (Nodes[start].value > Nodes[start + 1].value) {
+          Nodes[start].parent = start + 1;
+        } else {
+          Nodes[start + 1].parent = start;
+        }
+      } else if (tree_size > step / 2) {
+        middle = start + (step / 2) - 1;
+        parallel_merge(Nodes, middle, middle + 1);
+      }
+
+    }
+
+    // We have to make sure to synchronize here.
+    // We can't merge on the next level of the tree until we have merged all
+    // of the subtrees on the lowest levels.
+    upc_barrier;
+
+  }
+
+}
 
 void merge(node* N, unsigned long left, unsigned long right) {
   unsigned long head;
@@ -43,6 +108,7 @@ void merge(node* N, unsigned long left, unsigned long right) {
       N[head].parent = left; left = N[left].parent;}
     else {N[head].parent = right; right = N[right].parent;}
     head = N[head].parent;}}
+
 
 void cartesianTree(node* Nodes, unsigned long s, unsigned long n) { 
   if (n < 2) return;

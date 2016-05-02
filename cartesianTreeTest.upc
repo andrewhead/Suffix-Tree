@@ -30,7 +30,7 @@
 #include "cartesianTree.h"
 
 // Reused from mergeSuffixArrayToTree
-inline unsigned long getRoot(node* nodes, unsigned long i) {
+inline unsigned long getRoot(shared node* nodes, unsigned long i) {
   unsigned long root = nodes[i].parent;
   while (root != 0 && nodes[nodes[root].parent].value == nodes[root].value)
     root = nodes[root].parent;
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     char* input_filename = (char*)argv[1];
     char* output_filename = (char*)argv[2];
     long n;
-    struct node *nodes;
+    shared node *nodes;
 
     FILE *nodes_file = fopen(input_filename, "r");
   
@@ -59,7 +59,8 @@ int main(int argc, char **argv) {
     printf("Number of nodes in file %s: %ld\n", input_filename, n);
     unsigned long index;
     unsigned long value;
-    nodes = (struct node*) malloc(n * sizeof(struct node));
+    unsigned long nodes_per_thread = (n + THREADS - 1) / THREADS;
+    nodes = (shared node*) upc_all_alloc(THREADS, nodes_per_thread * sizeof(node));
     for (long i = 0; i < n; i++) {
         fscanf(nodes_file, "%ld\t%ld\n", &index, &value);
         nodes[index].value = value;
@@ -75,7 +76,7 @@ int main(int argc, char **argv) {
     double start_time = ((double) now.tv_sec) + ((double) now.tv_usec)/1000000.;
 
     // Construct the Cartesian tree
-    cartesianTree(nodes, 1, n - 1);
+    parallel_cartesian_tree(nodes, n);
 
     // Update report the time taken to construct the tree
     gettimeofday(&now, &tzp);
