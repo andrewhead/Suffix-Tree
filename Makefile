@@ -42,7 +42,8 @@ PCFLAGS = -lcilkrts -fcilkplus -O2 -DCILKP $(INTT)
 PLFLAGS = -lcilkrts -fcilkplus
 
 else ifdef CILK
-PCC = cilk++
+# PCC = cilk++
+PCC = icc
 PCFLAGS = -O2 -DCILK -Wno-cilk-for $(INTT)
 PLFLAGS =
 
@@ -66,7 +67,7 @@ ALL = cartesianTree
 
 all : $(ALL)
 
-catesianTreeTest.o: cartesianTreeTest.C
+cartesianTreeTest.o: cartesianTreeTest.C
 	$(PCC) $(PCFLAGS) -c cartesianTreeTest.C
 
 cartesianTree:  cartesianTreeTest.o

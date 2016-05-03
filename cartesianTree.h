@@ -23,6 +23,14 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+
+#include <sys/types.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+#include <cilk/cilk_api.h>
+#include <cilk/cilk.h>
+
+
 struct node {
   unsigned long firstChar;
   unsigned long parent;
@@ -44,7 +52,9 @@ void merge(node* N, unsigned long left, unsigned long right) {
     else {N[head].parent = right; right = N[right].parent;}
     head = N[head].parent;}}
 
-void cartesianTree(node* Nodes, unsigned long s, unsigned long n) { 
+void cartesianTree(node* Nodes, unsigned long s, unsigned long n) {
+  // printf("Thread ID: %d\n", syscall(SYS_gettid));
+  // printf("Workers: %d\n", __cilkrts_get_nworkers());
   if (n < 2) return;
   if(n == 2) {
     if (Nodes[s].value > Nodes[s+1].value) Nodes[s].parent=s+1;

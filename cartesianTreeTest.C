@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
-#include "cilk.h"
 #include "cartesianTree.h"
 
 // Reused from mergeSuffixArrayToTree
@@ -85,8 +84,9 @@ int main(int argc, char **argv) {
     // This was used in the original mergeSuffixArrayToTree code to, I expect,
     // essentially coalesce repeated nodes.  We repeat it here so that we can compare
     // our new test output against the previous test output.
-    cilk_for(long i = 1; i < n; i++) 
+    for(long i = 1; i < n; i++) {
       nodes[i].parent = getRoot(nodes, i);
+    }
     printf("Set shortcuts through repeated parents\n");
 
     // Write the result to file

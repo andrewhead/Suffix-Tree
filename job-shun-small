@@ -1,0 +1,11 @@
+#!/bin/bash -l 
+#SBATCH -p debug
+#SBATCH -N 1
+#SBATCH -t 00:10:00 
+#SBATCH -J shun-small
+#SBATCH -o shun-small.%j.out
+#SBATCH -e shun-small.%j.err
+
+cd ${PWD}
+srun -n 1 ./cartesianTree $SCRATCH/striped/nodes-10M.tsv $SCRATCH/striped/shun-output-10M.tsv
+
