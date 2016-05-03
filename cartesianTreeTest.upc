@@ -30,10 +30,10 @@
 #include "cartesianTree.h"
 
 // Reused from mergeSuffixArrayToTree
-inline unsigned long getRoot(shared node* nodes, unsigned long i) {
-  unsigned long root = nodes[i].parent;
-  while (root != 0 && nodes[nodes[root].parent].value == nodes[root].value)
-    root = nodes[root].parent;
+inline unsigned long getRoot(shared node* nodes, unsigned long i, unsigned long *index) {
+  unsigned long root = nodes[index[i]].parent;
+  while (root != 0 && nodes[index[nodes[index[root]].parent]].value == nodes[index[root]].value)
+    root = nodes[index[root]].parent;
   return root;
 }
 
@@ -41,7 +41,7 @@ inline unsigned long getRoot(shared node* nodes, unsigned long i) {
 // Shared structures for holding nodes of the tree
 shared node* nodes;
 shared unsigned long n;
-shared unsigned long nodes_per_thread;
+shared unsigned long elements_per_thread;
 
 // Adapted from the `cilk_main` code from suffixTreeTest.C.
 // Most of this is the same code, but it uses only C instead of C++, and performs
@@ -59,29 +59,50 @@ int main(int argc, char **argv) {
 
     // For iterating through the nodes in a data file
     FILE *nodes_file;
-    unsigned long index;
+    unsigned long element_index;
     unsigned long value;
-  
+ 
+    // It's not possible (I believe) to dynamically allocate a shared array with UPC and then
+    // access its elements in blocks on each thread, by default.  Sources:
+    // * https://hpcrdm.lbl.gov/pipermail/upc-users/2011-December/000654.html 
+    // * http://upc.lbl.gov/hypermail/upc-users/0067.html
+    // * https://hermes.gwu.edu/cgi-bin/wa?A3=ind0510&L=UPC-HELP&E=0&P=505&B=--&T=TEXT%2FPLAIN;%20charset=US-ASCII&header=1
+    // Because we want to look up elements by block to preserve locality of access and the
+    // elegance of the problem's memory layout for PGAS, we make a (private!) array on each
+    // machine that will provide fast lookup of a block-based index from its original cyclic index.
+    unsigned long *index;
+
     // Read the nodes into a local list
-    printf("Before the split\n");
     if (MYTHREAD == 0) {
-      unsigned long num_nodes;
+      unsigned long element_count;
       nodes_file = fopen(input_filename, "r");
-      fscanf(nodes_file, "%ld\n", &num_nodes);
-      n = num_nodes;  // transfer the node count to the shared variable
+      fscanf(nodes_file, "%ld\n", &element_count);
+      n = element_count;  // transfer the node count to the shared variable
+      elements_per_thread = (n + THREADS - 1) / THREADS;
       printf("Number of nodes in file %s: %ld\n", input_filename, n);
-      nodes_per_thread = (n + THREADS - 1) / THREADS;
     }
     upc_barrier;
 
-    nodes = (shared node*) upc_all_alloc(THREADS, nodes_per_thread * sizeof(node));
+    printf("Nodes per thread: %ld\n", elements_per_thread);
+    nodes = (shared node*) upc_all_alloc(THREADS, elements_per_thread * sizeof(node));
     upc_barrier;
 
+    // Create lookup from the typical cyclic indexing to block-based indexes. 
+    unsigned long thread, phase;
+    index = (unsigned long*) malloc(n * sizeof(unsigned long));
+    for (int i = 0; i < n; i++) {
+        thread = i / elements_per_thread;
+        phase = i % elements_per_thread;
+        index[i] = thread + phase * THREADS;
+    }
+    upc_barrier;
+
+    // Now that we have our block index into the array, load in the data
     if (MYTHREAD == 0) {
       for (long i = 0; i < n; i++) {
-          fscanf(nodes_file, "%ld\t%ld\n", &index, &value);
-          nodes[index].value = value;
-          nodes[index].parent = 0;  // all nodes start without a parent
+          fscanf(nodes_file, "%ld\t%ld\n", &element_index, &value);
+          nodes[index[element_index]].value = value;
+          nodes[index[element_index]].parent = 0;  // all nodes start without a parent
       }
       fclose(nodes_file);
       printf("Read nodes from file\n");
@@ -98,7 +119,8 @@ int main(int argc, char **argv) {
     }
 
     // Construct the Cartesian tree
-    parallel_cartesian_tree(nodes, n);
+    parallel_cartesian_tree(nodes, n, index);
+    printf("Exited the Cartesian tree function\n");
     upc_barrier;
 
     // Update report the time taken to construct the tree
@@ -112,14 +134,20 @@ int main(int argc, char **argv) {
     // essentially coalesce repeated nodes.  We repeat it here so that we can compare
     // our new test output against the previous test output.
     cilk_for(long i = 1; i < n; i++) 
-      nodes[i].parent = getRoot(nodes, i);
+      nodes[index[i]].parent = getRoot(nodes, i, index);
     printf("Set shortcuts through repeated parents\n");
 
     // Write the result to file
     FILE *cartesian_tree_file = fopen(output_filename, "w");
     fprintf(cartesian_tree_file, "%ld\n", n);  // the first line is the number of nodes
     for (long i = 0; i < n; i++) {
-      fprintf(cartesian_tree_file, "%ld\t%ld\t%ld\t%ld\n", i, nodes[i].value, nodes[i].parent, nodes[nodes[i].parent].value);
+      fprintf(cartesian_tree_file,
+        "%ld\t%ld\t%ld\t%ld\n",
+        i,
+        nodes[index[i]].value,
+        nodes[index[i]].parent,
+        nodes[index[nodes[index[i]].parent]].value
+      );
     }
     fclose(cartesian_tree_file);
     printf("Output results to file\n");
