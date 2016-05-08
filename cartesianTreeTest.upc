@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
     // Now that we have our block index into the array, load in the data
     if (MYTHREAD == 0) {
-      for (long i = 0; i < n; i++) {
+      for (unsigned long i = 0; i < n; i++) {
           fscanf(nodes_file, "%ld\t%ld\n", &element_index, &value);
           nodes[index[element_index]].value = value;
           nodes[index[element_index]].parent = 0;  // all nodes start without a parent
@@ -151,6 +151,5 @@ int main(int argc, char **argv) {
     }
     fclose(cartesian_tree_file);
     printf("Output results to file\n");
-
   }
 }

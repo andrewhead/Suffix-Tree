@@ -96,7 +96,7 @@ void parallel_cartesian_tree(shared node* Nodes, unsigned long n, unsigned long 
 
   }
 
-  printf("Number of computations: %ld\n", computations);
+  // printf("Number of computations: %ld\n", computations);
 
 }
 
